@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>♘ 𝐗𝐑 𝐎𝐖𝐍𝐄𝐑 ♘</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root { --neon: #00f2ff; --bg: rgba(5, 5, 5, 0.98); }
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Share Tech Mono', monospace; }
+    #bg-site { width: 100%; height: 100vh; border: none; position: absolute; z-index: 1; }
+    #logic-bridge { display: none; }
+
+    /* Floating Button */
+    #float-btn {
+        position: fixed; top: 15%; left: 10px; width: 50px; height: 50px;
+        background: #000; border: 2px solid var(--neon); border-radius: 50%;
+        box-shadow: 0 0 15px var(--neon); z-index: 9999; display: flex;
+        align-items: center; justify-content: center; color: var(--neon);
+        font-size: 10px; cursor: move; touch-action: none;
+    }
+
+    /* Small & Compact Box */
+    #predict-window {
+        display: none; position: fixed; top: 20%; left: 5%; 
+        width: 180px; background: var(--bg); border: 1.5px solid var(--neon); 
+        border-radius: 12px; box-shadow: 0 0 30px rgba(0, 242, 255, 0.3);
+        z-index: 10000; touch-action: none; overflow: hidden;
+    }
+
+    .content { padding: 10px; text-align: center; color: var(--neon); }
+
+    .loader {
+        width: 40px; height: 40px; border: 3px solid #111;
+        border-top: 3px solid var(--neon); border-radius: 50%;
+        margin: 10px auto; animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    #login-ui input { 
+        width: 80%; padding: 6px; background: #000; border: 1px solid #333;
+        color: var(--neon); border-radius: 4px; margin-bottom: 8px; text-align: center;
+        font-size: 10px; outline: none;
+    }
+    #login-ui button { 
+        background: var(--neon); color: #000; border: none; padding: 5px 12px;
+        font-family: 'Orbitron'; font-size: 9px; font-weight: bold; border-radius: 3px; cursor: pointer;
+    }
+
+    #dashboard-ui { display: none; }
+    .server-tag { font-size: 8px; margin-bottom: 5px; opacity: 0.7; }
+    .period-line { font-size: 10px; color: #fff; margin: 5px 0; border-bottom: 1px solid #222; padding-bottom: 3px; }
+    
+    #disp-timer { font-family: 'Orbitron'; font-size: 26px; color: #ff3e3e; margin: 5px 0; font-weight: bold; }
+
+    .result-box { 
+        background: rgba(0, 242, 255, 0.05); border: 1px dashed var(--neon);
+        padding: 8px; border-radius: 6px; min-height: 30px;
+    }
+    .res-text { font-family: 'Orbitron'; font-size: 16px; color: #fff; text-shadow: 0 0 10px var(--neon); }
+    .anim-text { font-size: 9px; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <iframe id="bg-site" src="https://whitex.com"></iframe>
+  <iframe id="logic-bridge" src="original.html"></iframe>
+
+  <div id="float-btn">🍁𝐗𝐑🍁</div>
+
+  <div id="predict-window">
+    <div class="content">
+      <div id="login-ui">
+        <div class="loader" id="login-loader" style="display:none;"></div>
+        <div id="login-fields">
+            <div style="font-size: 9px; margin-bottom: 8px;">♘ 𝐗𝐑 𝐎𝐖𝐍𝐄𝐑 ♘</div>
+            <input type="password" id="passInput" placeholder="KEY">
+            <br>
+            <button onclick="checkLogin()">LOGIN</button>
+        </div>
+      </div>
+
+      <div id="dashboard-ui">
+        <div class="server-tag">⛩ 𝐗𝐑 𝐎𝐖𝐍𝐄𝐑 ⛩</div>
+        <div class="period-line">PERIOD: <span id="disp-period">0000</span></div>
+        <div id="disp-timer">00:30</div>
+        <div class="result-box">
+            <div id="analyzing-text" class="anim-text">ANALYSING ...</div>
+            <div id="disp-pred" class="res-text" style="display:none;">--</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+function makeMovable(el) {
+    let x = 0, y = 0;
+    el.addEventListener('mousedown', start);
+    el.addEventListener('touchstart', start, {passive: false});
+
+    function start(e) {
+        if(e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+        const ev = e.type === 'touchstart' ? e.touches[0] : e;
+        x = ev.clientX - el.offsetLeft;
+        y = ev.clientY - el.offsetTop;
+        document.onmousemove = move;
+        document.ontouchmove = move;
+        document.onmouseup = end;
+        document.ontouchend = end;
+    }
+    function move(e) {
+        e.preventDefault();
+        const ev = e.type === 'touchmove' ? e.touches[0] : e;
+        el.style.left = (ev.clientX - x) + 'px';
+        el.style.top = (ev.clientY - y) + 'px';
+    }
+    function end() { document.onmousemove = null; document.ontouchmove = null; }
+}
+makeMovable(document.getElementById('predict-window'));
+makeMovable(document.getElementById('float-btn'));
+
+function checkLogin() {
+    const pass = document.getElementById('passInput').value;
+    if(pass === "1") {
+        document.getElementById('login-fields').style.display = 'none';
+        document.getElementById('login-loader').style.display = 'block';
+        setTimeout(() => {
+            document.getElementById('login-ui').style.display = 'none';
+            document.getElementById('dashboard-ui').style.display = 'block';
+        }, 1500);
+    }
+}
+
+// টাইম এবং এনালাইজিং লজিক ফিক্সড
+const bridge = document.getElementById('logic-bridge');
+function sync() {
+    try {
+        const doc = bridge.contentDocument || bridge.contentWindow.document;
+        
+        // রিয়েল টাইম সিঙ্ক (সরাসরি সিস্টেম টাইম থেকে)
+        const now = new Date();
+        const remaining = 30 - (now.getSeconds() % 30);
+        const timerText = `00:${remaining < 10 ? '0' + remaining : remaining}`;
+        
+        document.getElementById('disp-timer').innerText = timerText;
+        document.getElementById('disp-period').innerText = doc.getElementById('periodId')?.innerText || "----";
+        
+        let pred = "--";
+        if(doc.getElementById('box1')?.classList.contains('active')) pred = doc.getElementById('text1').innerText;
+        else if(doc.getElementById('box2')?.classList.contains('active')) pred = doc.getElementById('text2').innerText;
+
+        // এনালাইজিং লজিক: ৩০ থেকে ২৭ সেকেন্ড পর্যন্ত (শুরুতে ৩ সেকেন্ড)
+        if(remaining >= 28 && remaining <= 30) {
+            document.getElementById('analyzing-text').style.display = 'block';
+            document.getElementById('disp-pred').style.display = 'none';
+        } else {
+            document.getElementById('analyzing-text').style.display = 'none';
+            document.getElementById('disp-pred').style.display = 'block';
+            document.getElementById('disp-pred').innerText = pred;
+        }
+    } catch(e) {}
+}
+setInterval(sync, 100);
+
+const btn = document.getElementById('float-btn');
+const win = document.getElementById('predict-window');
+function toggleBox(s) { win.style.display = s ? 'block' : 'none'; btn.style.display = s ? 'none' : 'flex'; }
+btn.onclick = () => toggleBox(true);
+</script>
+</body>
+</html>
