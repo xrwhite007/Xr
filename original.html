@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wingo 30S Ultra Fast</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body { background: #0a0a0a; color: #fff; font-family: 'Outfit', sans-serif; padding: 15px; margin: 0; display: flex; flex-direction: column; align-items: center; }
+    .header { font-size: 20px; font-weight: 700; color: #00ffc8; margin-bottom: 15px; letter-spacing: 1px; }
+    .card { background: #161616; border-radius: 12px; padding: 15px; width: 100%; max-width: 400px; text-align: center; border: 1px solid #222; margin-bottom: 15px; }
+    #timer { font-size: 40px; font-weight: bold; color: #ff4d4d; font-variant-numeric: tabular-nums; }
+    .prediction-container { display: flex; gap: 10px; width: 100%; max-width: 400px; margin-bottom: 15px; }
+    .prediction-box { flex: 1; background: #1a1a1a; border: 2px solid #333; padding: 15px; border-radius: 12px; text-align: center; transition: 0.3s; opacity: 0.5; }
+    .prediction-box.active { border-color: #00ffc8; box-shadow: 0 0 15px rgba(0, 255, 200, 0.3); background: #00ffc811; opacity: 1; transform: scale(1.03); }
+    .box-label { font-size: 10px; color: #888; margin-bottom: 5px; text-transform: uppercase; }
+    .pred-text { font-size: 24px; font-weight: bold; color: #fff; }
+    .status-tag { font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: none; margin-top: 8px; }
+    .active .status-tag { display: inline-block; background: #00ffc8; color: #000; }
+    .history-container { width: 100%; max-width: 400px; background: #161616; border-radius: 12px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #222; color: #FFD700; padding: 10px; font-size: 11px; }
+    td { padding: 10px; font-size: 13px; text-align: center; border-bottom: 1px solid #222; }
+    .num-green { color: #00ff88; font-weight: bold; }
+    .num-red { color: #ff4c4c; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <div class="header">WINGO 30S AI PRO</div>
+
+  <div class="card">
+    <div style="font-size: 12px; color: #aaa;">NEXT PERIOD: <span id="periodId" style="color:#00ffc8;">----</span></div>
+    <div id="timer">00:30</div>
+  </div>
+
+  <div class="prediction-container">
+    <div id="box1" class="prediction-box">
+      <div class="box-label">ALGO ALPHA</div>
+      <div id="text1" class="pred-text">--</div>
+      <div class="status-tag">MAIN SIGNAL</div>
+    </div>
+    <div id="box2" class="prediction-box">
+      <div class="box-label">ALGO BETA</div>
+      <div id="text2" class="pred-text">--</div>
+      <div class="status-tag">RECOVERY</div>
+    </div>
+  </div>
+
+  <div class="history-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Period</th>
+          <th>Number</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody id="historyBody"></tbody>
+    </table>
+  </div>
+
+<script>
+const HISTORY_API = 'https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json';
+let lastBox1Pred = "";
+let lastBox2Pred = "";
+let activeServer = 1;
+
+async function fetchData() {
+    try {
+        const response = await fetch(HISTORY_API + '?ts=' + Date.now());
+        const json = await response.json();
+        const list = json.data.list;
+        
+        // পিরিয়ড লজিক: লাস্ট রেজাল্ট পিরিয়ড + ১
+        const lastPeriod = list[0].issueNumber;
+        document.getElementById('periodId').innerText = (BigInt(lastPeriod) + 1n).toString();
+
+        const lastResult = parseInt(list[0].number) >= 5 ? "Big" : "Small";
+
+        if (lastBox1Pred !== "") {
+            if (activeServer === 1 && lastBox1Pred !== lastResult) activeServer = 2;
+            else if (activeServer === 2 && lastBox2Pred !== lastResult) activeServer = 1;
+        }
+
+        const tbody = document.getElementById('historyBody');
+        tbody.innerHTML = list.slice(0, 5).map(item => {
+            const n = parseInt(item.number);
+            return `<tr><td>${item.issueNumber}</td><td class="${n >= 5 ? 'num-green' : 'num-red'}">${n}</td><td>${n >= 5 ? 'Big' : 'Small'}</td></tr>`;
+        }).join('');
+
+        const n1 = parseInt(list[0].number);
+        const n2 = parseInt(list[1].number);
+        lastBox1Pred = n1 >= 5 ? "Small" : "Big"; 
+        lastBox2Pred = (n1 + n2) % 2 === 0 ? "Big" : "Small";
+
+        document.getElementById('text1').innerText = lastBox1Pred;
+        document.getElementById('text2').innerText = lastBox2Pred;
+        document.getElementById('box1').className = activeServer === 1 ? 'prediction-box active' : 'prediction-box';
+        document.getElementById('box2').className = activeServer === 2 ? 'prediction-box active' : 'prediction-box';
+
+    } catch (e) { console.error("Sync error"); }
+}
+
+setInterval(() => {
+    const now = new Date();
+    const sec = now.getSeconds() % 30;
+    const remaining = 30 - sec;
+    document.getElementById('timer').innerText = `00:${remaining < 10 ? '0' + remaining : remaining}`;
+    
+    // ৩০ সেকেন্ড হওয়া মাত্রই ডাটা আপডেট হবে
+    if (sec === 0 || sec === 1) {
+        fetchData();
+    }
+}, 500);
+
+fetchData();
+</script>
+</body>
+</html>
+    console.error("Network slow...");
+    } finally {
+        isFetching = false;
+    }
+}
+
+function startTimer() {
+    setInterval(() => {
+        const now = new Date();
+        const ms = now.getMilliseconds();
+        const seconds = now.getSeconds();
+        const remaining = 30 - (seconds % 30);
+        
+        document.getElementById('timer').innerText = `00:${remaining < 10 ? '0' + remaining : remaining}`;
+        
+        // টাইমার ৩০ বা ১ এ আসা মাত্রই ডাটা ফেচ করার চেষ্টা করবে (লেট কমানোর জন্য)
+        if (remaining === 30 && ms < 200) {
+            fetchData();
+        }
+    }, 100); // ১০০ মিলিসেকেন্ড পর পর চেক করবে যাতে রেসপন্স ফাস্ট হয়
+}
+
+// শুরুতে একবার কল
+fetchData();
+startTimer();
+</script>
+
+</body>
+</html>
